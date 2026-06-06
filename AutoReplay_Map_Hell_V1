@@ -22,7 +22,7 @@ local SpeedConfig = {
 
 -- ── [KATEGORI 3] AUTO JALAN (Anti AFK) ─────────────────────
 local AutoJalanConfig = {
-    AutoJalan    = true,                
+    AutoJalan    = false,                
     StartDelay   = 10,                  
     PlaceIdGuard = 123516946198836,     
     Loop         = true,                
