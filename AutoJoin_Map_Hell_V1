@@ -1,0 +1,351 @@
+-- ==========================================
+-- AUTO JOINER V4 (Fix UI Stuck, Draggable & Toggleable)
+-- ==========================================
+
+-- ==========================================
+-- [G] CONFIGURATION
+-- ==========================================
+local Config = {
+    AutoStart            = true,
+    DefaultStateMinimize = true,          -- true = Badge kecil [+] / false = Panel terbuka
+    
+    TargetMap            = "map_volcano", -- ID Map yang ingin dimainkan
+    TargetDifficulty     = "dif_easy",    -- dif_easy, dif_normal, dll
+    MaxPlayers           = 1,             -- Jumlah maksimal player (1 = Solo)
+    
+    LobbyPlaceId         = 108533757090220
+}
+
+local DOORS = {
+    { CF = CFrame.new(170.263336, 72.2857971, 792.448059, -0.195122838, 0, -0.980778813, 0, 1, 0, 0.980778813, 0, -0.195122838), RemoteIndex = "7" },
+    { CF = CFrame.new(156.334229, 72.2857971, 789.650024, 0.195122838, 0, 0.980778813, 0, 1, 0, -0.980778813, 0, 0.195122853), RemoteIndex = "8" },
+    { CF = CFrame.new(172.604416, 72.2857971, 780.67865, -0.195122838, 0, -0.980778813, 0, 1, 0, 0.980778813, 0, -0.195122838), RemoteIndex = "9" },
+    { CF = CFrame.new(158.675308, 72.2857971, 777.880554, 0.195122838, 0, 0.980778813, 0, 1, 0, -0.980778813, 0, 0.195122838), RemoteIndex = "10" }
+}
+
+-- ==========================================
+-- SERVICES & VARIABLES
+-- ==========================================
+local CoreGui           = game:GetService("CoreGui")
+local Players           = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService  = game:GetService("UserInputService")
+local LocalPlayer       = Players.LocalPlayer
+
+local isRunning         = Config.AutoStart
+local isMinimized       = Config.DefaultStateMinimize
+local activeRemoteIndex = nil
+
+-- ==========================================
+-- GUI SETUP (UNIFIED & DRAGGABLE)
+-- ==========================================
+pcall(function()
+    if CoreGui:FindFirstChild("AutoJoinerV4") then
+        CoreGui.AutoJoinerV4:Destroy()
+    end
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoJoinerV4"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+-- Wrapper transparan sebagai penampung drag (agar posisi minimize & maximize tetap sama)
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(0, 220, 0, 160)
+MainContainer.Position = UDim2.new(0, 20, 0.5, -80)
+MainContainer.BackgroundTransparency = 1
+MainContainer.Parent = ScreenGui
+
+-- PANEL UTAMA (Jika Maximize)
+local MainPanel = Instance.new("Frame")
+MainPanel.Size = UDim2.new(1, 0, 1, 0)
+MainPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainPanel.Visible = not isMinimized
+MainPanel.Parent = MainContainer
+Instance.new("UICorner", MainPanel).CornerRadius = UDim.new(0, 8)
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBar.Parent = MainPanel
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Auto Joiner V4"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Tombol Minmize di pojok kanan panel utama
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0, 30, 0, 30)
+HideBtn.Position = UDim2.new(1, -30, 0, 0)
+HideBtn.BackgroundTransparency = 1
+HideBtn.Text = "—"
+HideBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+HideBtn.Font = Enum.Font.GothamBold
+HideBtn.TextSize = 14
+HideBtn.Parent = TopBar
+
+-- Tombol [+] BESAR (Jika Minimize)
+local MiniBtn = Instance.new("TextButton")
+MiniBtn.Size = UDim2.new(0, 45, 0, 45) -- DIBUAT LEBIH BESAR
+MiniBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+MiniBtn.Text = "+"
+MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBtn.Font = Enum.Font.GothamBold
+MiniBtn.TextSize = 24
+MiniBtn.Visible = isMinimized
+MiniBtn.Parent = MainContainer
+Instance.new("UICorner", MiniBtn).CornerRadius = UDim.new(0, 8)
+
+-- Info Layer
+local MapInfoLabel = Instance.new("TextLabel")
+MapInfoLabel.Size = UDim2.new(1, -20, 0, 20)
+MapInfoLabel.Position = UDim2.new(0, 10, 0, 40)
+MapInfoLabel.BackgroundTransparency = 1
+MapInfoLabel.Text = "Map: Menunggu..."
+MapInfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+MapInfoLabel.Font = Enum.Font.Gotham
+MapInfoLabel.TextSize = 12
+MapInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+MapInfoLabel.Parent = MainPanel
+
+local PlayerInfoLabel = Instance.new("TextLabel")
+PlayerInfoLabel.Size = UDim2.new(1, -20, 0, 20)
+PlayerInfoLabel.Position = UDim2.new(0, 10, 0, 60)
+PlayerInfoLabel.BackgroundTransparency = 1
+PlayerInfoLabel.Text = "Players: 0 / " .. tostring(Config.MaxPlayers)
+PlayerInfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+PlayerInfoLabel.Font = Enum.Font.Gotham
+PlayerInfoLabel.TextSize = 12
+PlayerInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+PlayerInfoLabel.Parent = MainPanel
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+StatusLabel.Position = UDim2.new(0, 10, 0, 80)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Idle"
+StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 80)
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextSize = 12
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = MainPanel
+
+-- TOMBOL ON/OFF MANUAL
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 30)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 115)
+ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+ToggleBtn.Parent = MainPanel
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+-- Logic UI Buttons
+local function ToggleUI()
+    isMinimized = not isMinimized
+    MainPanel.Visible = not isMinimized
+    MiniBtn.Visible = isMinimized
+end
+HideBtn.MouseButton1Click:Connect(ToggleUI)
+MiniBtn.MouseButton1Click:Connect(ToggleUI)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+    ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+    if not isRunning then StatusLabel.Text = "Status: PAUSED" end
+end)
+
+-- ==========================================
+-- DRAG SYSTEM (Berlaku untuk Mini dan Panel Utama)
+-- ==========================================
+local function MakeDraggable(dragHandle)
+    local dragging, dragInput, dragStart, startPos
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainContainer.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            MainContainer.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+MakeDraggable(TopBar)   -- Tarik dari Bar atas jika panel terbuka
+MakeDraggable(MiniBtn)  -- Tarik dari tombol [+] jika panel tertutup
+
+-- ==========================================
+-- HELPERS & VIRTUAL CLICK
+-- ==========================================
+local function getPath(parent, pathArray)
+    local current = parent
+    for _, name in ipairs(pathArray) do
+        if not current then return nil end
+        current = current:FindFirstChild(name)
+    end
+    return current
+end
+
+local function fireRemote(remoteName, ...)
+    local remote = getPath(ReplicatedStorage, {"RemoteFunctions", remoteName})
+    if remote then
+        local args = {...}
+        pcall(function() remote:InvokeServer(unpack(args)) end)
+        return true
+    end
+    return false
+end
+
+-- VIRTUAL CLICK PENTING: Untuk menutup UI setelah remote ditekan
+local function VirtualClick(button)
+    if not button then return end
+    
+    -- Coba via firesignal terlebih dahulu
+    if typeof(firesignal) == "function" then
+        pcall(function() firesignal(button.MouseButton1Click) end)
+        pcall(function() firesignal(button.Activated) end)
+    end
+    
+    -- Fallback via getconnections
+    if typeof(getconnections) == "function" then
+        for _, sigName in ipairs({"MouseButton1Click", "Activated"}) do
+            pcall(function()
+                local conns = getconnections(button[sigName])
+                if conns then
+                    for _, c in ipairs(conns) do
+                        pcall(function() c:Fire() end)
+                    end
+                end
+            end)
+        end
+    end
+end
+
+-- ==========================================
+-- MAIN STATE MACHINE LOGIC
+-- ==========================================
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+
+        pcall(function()
+            if not isRunning then return end
+
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            if not pGui then return end
+
+            local mapPickerLobby = getPath(pGui, {"GameGui", "Screen", "Middle", "MapPickerLobby"})
+            local bottomLobby    = getPath(pGui, {"GameGui", "Screen", "Bottom", "Lobby"})
+            
+            -- UI Updates
+            local mapTitleUI = getPath(mapPickerLobby, {"Items", "Frame", "Info", "Title"})
+            if mapTitleUI and mapTitleUI.Text ~= "" then MapInfoLabel.Text = "Map: " .. mapTitleUI.Text end
+
+            local playerAmtUI = getPath(bottomLobby, {"Frame", "MaxPlayers", "Bg", "Frame", "MaxPlayers", "Amount"})
+            if playerAmtUI and playerAmtUI.Text ~= "" then PlayerInfoLabel.Text = "Players: " .. playerAmtUI.Text .. " / " .. tostring(Config.MaxPlayers) end
+
+            -- ==========================================
+            -- FASE 3: SIAP MULAI (Di dalam Lobby Room)
+            -- ==========================================
+            if bottomLobby and bottomLobby.Visible == true then
+                StatusLabel.Text = "Status: Mengatur Player..."
+                StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 80)
+                
+                -- Kirim set remote amount
+                if activeRemoteIndex then
+                    fireRemote("LobbySetMaxPlayers_" .. activeRemoteIndex, Config.MaxPlayers)
+                end
+                task.wait(0.5)
+
+                -- Jika sesuai config, START!
+                local currentAmt = playerAmtUI and playerAmtUI.Text or "0"
+                if currentAmt == tostring(Config.MaxPlayers) then
+                    StatusLabel.Text = "Status: Memulai Game!"
+                    StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 80)
+                    
+                    -- PENTING: KLIK VIRTUAL TOMBOL UI
+                    local startBtn = getPath(bottomLobby, {"Frame", "Buttons", "StartNow"})
+                    if startBtn then VirtualClick(startBtn) end
+                    
+                    -- Tembak remote
+                    if activeRemoteIndex then
+                        fireRemote("StartLobby_" .. activeRemoteIndex)
+                    end
+                    task.wait(4)
+                end
+
+            -- ==========================================
+            -- FASE 2: BUAT LOBBY (Di Menu Pilih Map)
+            -- ==========================================
+            elseif mapPickerLobby and mapPickerLobby.Visible == true then
+                StatusLabel.Text = "Status: Membuat Lobby..."
+                StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 200)
+
+                -- PENTING: KLIK VIRTUAL TOMBOL ACCEPT (CREATE LOBBY) AGAR MENU TERTUTUP!
+                local acceptBtn = getPath(mapPickerLobby, {"Items", "Frame", "Info", "Accept"})
+                if acceptBtn then VirtualClick(acceptBtn) end
+                
+                -- Lalu baru tembak remote
+                if activeRemoteIndex then
+                    fireRemote("LobbySetMap_" .. activeRemoteIndex, Config.TargetMap, Config.TargetDifficulty, false)
+                end
+                task.wait(1.5)
+
+            -- ==========================================
+            -- FASE 1: MENCARI PINTU
+            -- ==========================================
+            else
+                StatusLabel.Text = "Status: Mencari Pintu..."
+                StatusLabel.TextColor3 = Color3.fromRGB(200, 80, 80)
+                
+                for _, door in ipairs(DOORS) do
+                    if not isRunning then break end
+                    
+                    local char = LocalPlayer.Character
+                    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    if hrp then
+                        hrp.CFrame = door.CF
+                        task.wait(1.5) 
+                        
+                        -- Cek apakah UI Map picker terbuka setelah teleport
+                        local updatedPicker = getPath(pGui, {"GameGui", "Screen", "Middle", "MapPickerLobby"})
+                        
+                        if updatedPicker and updatedPicker.Visible == true then
+                            activeRemoteIndex = door.RemoteIndex
+                            break
+                        else
+                            fireRemote("LeaveLobby_" .. door.RemoteIndex)
+                            task.wait(0.5)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
