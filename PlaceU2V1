@@ -22,7 +22,7 @@ local MAIN_START_WAVE           = 5         -- [USER EDIT/C-WAVE]     guna: wave
 local LOOP_DELAY                = 0.01      -- [USER EDIT/C-WAVE]     guna: jeda antar peletakan unit di MAIN loop (detik).
 local MAIN_REQUIRES_PRIORITY_OK = false     -- [USER EDIT/C-WAVE]     guna: main HARUS tunggu priority done?
 local START_WAVE                = 5         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-ON.
-local STOP_WAVE                 = 10         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-OFF.
+local STOP_WAVE                 = 15         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-OFF.
 
 -- [D] CAP ----------------------------------------------------------------
 local PlacementUnitMaxCap = 6               -- [USER EDIT/D-CAP]      guna: maks total unit yg dipasang. (2 Priority + 4 Jalur Main = 6 Unit Total)
