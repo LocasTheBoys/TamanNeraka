@@ -18,11 +18,11 @@ local PRIORITY_LOCK      = false             -- [USER EDIT/B-PRIORITY] guna: akt
 local FAST_PLACE_FIRST_N = 0                -- [USER EDIT/B-BURST]    guna: N placement pertama tanpa jeda (boost). | nilai: 0-15.  | saran: 8 jika PRIORITY_LOCK=true. | efek: 0 = TIDAK ada burst, semua placement pakai LOOP_DELAY/PRIORITY_DELAY.
 
 -- [C] WAVE / MAIN --------------------------------------------------------
-local MAIN_START_WAVE           = 6         -- [USER EDIT/C-WAVE]     guna: wave minimum utk mulai MAIN placement.
+local MAIN_START_WAVE           = 5         -- [USER EDIT/C-WAVE]     guna: wave minimum utk mulai MAIN placement.
 local LOOP_DELAY                = 0.01      -- [USER EDIT/C-WAVE]     guna: jeda antar peletakan unit di MAIN loop (detik).
 local MAIN_REQUIRES_PRIORITY_OK = false     -- [USER EDIT/C-WAVE]     guna: main HARUS tunggu priority done?
-local START_WAVE                = 6         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-ON.
-local STOP_WAVE                 = 12         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-OFF.
+local START_WAVE                = 5         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-ON.
+local STOP_WAVE                 = 10         -- [USER EDIT/C-WAVE]     guna: wave saat status auto-OFF.
 
 -- [D] CAP ----------------------------------------------------------------
 local PlacementUnitMaxCap = 6               -- [USER EDIT/D-CAP]      guna: maks total unit yg dipasang. (2 Priority + 4 Jalur Main = 6 Unit Total)
