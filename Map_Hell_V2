@@ -33,7 +33,7 @@ local scriptsByPlaceId = {
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU1V1",--place unit 1
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU2V1",--place unit 2 raf
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU3V1",--place unit 2 spawn
-        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoReplay_Map_Hell_V1",-- replay, jalan, speed, skip
+        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoReplay_Map_Hell_V2",-- replay, jalan, speed, skip
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/LowGrafik_V1",-- low
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/ANTI_AFK",
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"
