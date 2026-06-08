@@ -1,0 +1,312 @@
+-- ==========================================
+-- AUTO BUYER V4 (Sequential + Auto Teleport NPC)
+-- ==========================================
+
+local Config = {
+    AutoStart            = false,
+    DefaultStateMinimize = false,
+    
+    -- [ UNIT SEEDS CONFIG ]
+    UnitsToBuy = {
+        { Name = "unit_lava_trunk", Limit = 4 },
+        { Name = "unit_meteor_plant", Limit = 4 }
+    },
+
+    -- [ MYSTERY TRADER CONFIG ]
+    BuyMysteryUnit       = true, 
+    MysteryUnitIndex     = 3,    -- Beli unit ke-1 (paling kiri)
+    MysteryUnitLimit     = 0,    -- Limit 6 (0 = Unlimited)
+    
+    LoopDelay            = 1     
+}
+
+-- ==========================================
+-- SERVICES & VARIABLES
+-- ==========================================
+local CoreGui           = game:GetService("CoreGui")
+local Players           = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService  = game:GetService("UserInputService")
+local LocalPlayer       = Players.LocalPlayer
+
+local isRunning   = Config.AutoStart
+local isMinimized = Config.DefaultStateMinimize
+
+local BuyCounters = { Seeds = {}, Mystery = 0 }
+for _, unit in ipairs(Config.UnitsToBuy) do BuyCounters.Seeds[unit.Name] = 0 end
+
+-- Kordinat Teleport dari script V18 milikmu
+local AltCFrame = CFrame.new(88.318512, 66.0672607, 976.019836, -0.0658585504, -1.71381878e-08, -0.99782896, -6.15523845e-08, 1, -1.31129054e-08, 0.99782896, 6.05551591e-08, -0.0658585504)
+
+-- ==========================================
+-- GUI SETUP
+-- ==========================================
+pcall(function() if CoreGui:FindFirstChild("AutoBuyerUI") then CoreGui.AutoBuyerUI:Destroy() end end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoBuyerUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(0, 220, 0, 160)
+MainContainer.Position = UDim2.new(1, -240, 1, -180) 
+MainContainer.BackgroundTransparency = 1
+MainContainer.Parent = ScreenGui
+
+local MainPanel = Instance.new("Frame")
+MainPanel.Size = UDim2.new(1, 0, 1, 0)
+MainPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainPanel.Visible = not isMinimized
+MainPanel.Parent = MainContainer
+Instance.new("UICorner", MainPanel).CornerRadius = UDim.new(0, 8)
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBar.Parent = MainPanel
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Auto Buyer V4"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0, 30, 0, 30)
+HideBtn.Position = UDim2.new(1, -30, 0, 0)
+HideBtn.BackgroundTransparency = 1
+HideBtn.Text = "—"
+HideBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+HideBtn.Font = Enum.Font.GothamBold
+HideBtn.TextSize = 14
+HideBtn.Parent = TopBar
+
+local MiniBtn = Instance.new("TextButton")
+MiniBtn.Size = UDim2.new(0, 45, 0, 45)
+MiniBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+MiniBtn.Text = "+"
+MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBtn.Font = Enum.Font.GothamBold
+MiniBtn.TextSize = 24
+MiniBtn.Visible = isMinimized
+MiniBtn.Parent = MainContainer
+Instance.new("UICorner", MiniBtn).CornerRadius = UDim.new(0, 8)
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 40)
+StatusLabel.Position = UDim2.new(0, 10, 0, 45)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status:\nIdle"
+StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 80)
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextSize = 12
+StatusLabel.TextWrapped = true
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.TextYAlignment = Enum.TextYAlignment.Top
+StatusLabel.Parent = MainPanel
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 30)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 115)
+ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+ToggleBtn.Parent = MainPanel
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+-- Drag & Toggle Logic
+local function ToggleUI()
+    isMinimized = not isMinimized
+    MainPanel.Visible = not isMinimized
+    MiniBtn.Visible = isMinimized
+end
+HideBtn.MouseButton1Click:Connect(ToggleUI)
+MiniBtn.MouseButton1Click:Connect(ToggleUI)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+    ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+    if not isRunning then StatusLabel.Text = "Status:\nPAUSED" end
+end)
+
+local function MakeDraggable(dragHandle)
+    local dragging, dragInput, dragStart, startPos
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainContainer.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end)
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            MainContainer.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+MakeDraggable(TopBar)
+MakeDraggable(MiniBtn)
+
+-- ==========================================
+-- HELPER FUNCTIONS
+-- ==========================================
+local function UpdateStatus(text, color)
+    StatusLabel.Text = "Status:\n" .. text
+    StatusLabel.TextColor3 = color or Color3.fromRGB(255, 255, 255)
+end
+
+local function getPath(parent, pathArray)
+    local current = parent
+    for _, name in ipairs(pathArray) do
+        if not current then return nil end
+        current = current:FindFirstChild(name)
+    end
+    return current
+end
+
+local function VirtualClick(button)
+    if not button then return end
+    if typeof(firesignal) == "function" then
+        pcall(function() firesignal(button.MouseButton1Click) end)
+        pcall(function() firesignal(button.Activated) end)
+    end
+    if typeof(getconnections) == "function" then
+        for _, sigName in ipairs({"MouseButton1Click", "Activated"}) do
+            pcall(function()
+                local conns = getconnections(button[sigName])
+                if conns then for _, c in ipairs(conns) do pcall(function() c:Fire() end) end end
+            end)
+        end
+    end
+end
+
+-- ==========================================
+-- TELEPORT & GUI CHECKER (Dari Script V18)
+-- ==========================================
+local function isTraderGuiOpen()
+    local success, result = pcall(function()
+        local traderGui = LocalPlayer.PlayerGui.GameGui.Screen.Middle.WanderingTrader
+        if not traderGui.Visible then return false end
+        
+        local itemsFolder = traderGui.UnitShop.Frame.Top.Items
+        for _, child in ipairs(itemsFolder:GetChildren()) do
+            if string.match(child.Name, "unit_") then return true end
+        end
+        return false
+    end)
+    return success and result
+end
+
+local function forceOpenShop()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart", 5)
+    if not hrp then return false end
+
+    UpdateStatus("Teleport ke NPC...", Color3.fromRGB(200, 150, 50))
+    hrp.CFrame = AltCFrame
+    task.wait(1.5) 
+    
+    local traderPart = workspace:FindFirstChild("Map")
+        and workspace.Map:FindFirstChild("WanderingTrader")
+        and workspace.Map.WanderingTrader:FindFirstChild("Away")
+        and workspace.Map.WanderingTrader.Away:FindFirstChild("SummonTrader")
+        and workspace.Map.WanderingTrader.Away.SummonTrader:FindFirstChild("MeshPart")
+
+    if traderPart then
+        hrp.CFrame = traderPart.CFrame
+        task.wait(3.5) -- Tunggu animasi GUI terbuka
+    end
+    return isTraderGuiOpen()
+end
+
+-- ==========================================
+-- LOGIC ANTREAN (SEQUENTIAL ENGINE)
+-- ==========================================
+local function ProcessQueue()
+    -- Tahap 1: Beli Unit Seeds
+    for _, unit in ipairs(Config.UnitsToBuy) do
+        local currentCount = BuyCounters.Seeds[unit.Name]
+        if unit.Limit == 0 or currentCount < unit.Limit then
+            local limitText = unit.Limit == 0 and "Unlimited" or tostring(unit.Limit)
+            UpdateStatus("Beli " .. unit.Name .. "\n(" .. tostring(currentCount + 1) .. "/" .. limitText .. ")", Color3.fromRGB(80, 200, 200))
+            
+            local remote = getPath(ReplicatedStorage, {"RemoteFunctions", "BuyUnitWithSeeds"})
+            if remote then
+                pcall(function() remote:InvokeServer(unit.Name) end)
+                BuyCounters.Seeds[unit.Name] = currentCount + 1
+            end
+            return 
+        end
+    end
+
+    -- Tahap 2: Beli Mystery Trader (Dengan Teleport)
+    if Config.BuyMysteryUnit then
+        if Config.MysteryUnitLimit == 0 or BuyCounters.Mystery < Config.MysteryUnitLimit then
+            
+            -- CEK DULU: Apakah GUI terbuka? Kalau belum, Teleport!
+            if not isTraderGuiOpen() then
+                forceOpenShop()
+                return -- Keluar sebentar membiarkan UI terbuka sebelum klik
+            end
+
+            -- Kalau GUI sudah terbuka, baru eksekusi Virtual Click
+            UpdateStatus("Mencari Mystery Trader...", Color3.fromRGB(200, 200, 80))
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            if pGui then
+                local itemsFolder = getPath(pGui, {"GameGui", "Screen", "Middle", "WanderingTrader", "UnitShop", "Frame", "Top", "Items"})
+                if itemsFolder then
+                    local availableUnits = {}
+                    for _, child in ipairs(itemsFolder:GetChildren()) do
+                        if child:IsA("Frame") and string.match(child.Name, "unit_") then table.insert(availableUnits, child) end
+                    end
+                    table.sort(availableUnits, function(a, b) return a.AbsolutePosition.X < b.AbsolutePosition.X end)
+
+                    local targetIndex = Config.MysteryUnitIndex
+                    if availableUnits[targetIndex] then
+                        local limitText = Config.MysteryUnitLimit == 0 and "Unlimited" or tostring(Config.MysteryUnitLimit)
+                        UpdateStatus("Beli Mystery Unit #" .. targetIndex .. "\n(" .. tostring(BuyCounters.Mystery + 1) .. "/" .. limitText .. ")", Color3.fromRGB(80, 200, 80))
+                        
+                        local buyButton = getPath(availableUnits[targetIndex], {"Frame", "Buy"})
+                        if buyButton then
+                            VirtualClick(buyButton)
+                            BuyCounters.Mystery = BuyCounters.Mystery + 1
+                        end
+                    end
+                end
+            end
+            return 
+        end
+    end
+
+    -- Tahap 3: Selesai
+    UpdateStatus("Selesai!\nSemua target tercapai.", Color3.fromRGB(80, 255, 80))
+    isRunning = false
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 80, 80)
+    ToggleBtn.Text = "AUTO: OFF"
+end
+
+-- MAIN LOOP
+task.spawn(function()
+    while true do
+        task.wait(Config.LoopDelay)
+        if isRunning then
+            pcall(ProcessQueue)
+        end
+    end
+end)
