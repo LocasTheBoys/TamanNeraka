@@ -32,7 +32,7 @@ local scriptsByPlaceId = {
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/UpgradeU3V1",--upgrade U3
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU1V1",--place unit 1
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU2V1",--place unit 2 raf
-        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU3V1",--place unit 3 spawn
+        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU3V2",--place unit 3 spawn
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/PlaceU4V1",--place unit 4 seed
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoReplay_Map_Hell_V2",-- replay, jalan, speed, skip
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/LowGrafik_V1",-- low
