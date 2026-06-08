@@ -13,9 +13,9 @@ local Config = {
     },
 
     -- [ MYSTERY TRADER CONFIG ]
-    BuyMysteryUnit       = true, 
-    MysteryUnitIndex     = 3,    -- Beli unit ke-1 (paling kiri)
-    MysteryUnitLimit     = 0,    -- Limit 6 (0 = Unlimited)
+    BuyMysteryUnit       = false, 
+    MysteryUnitIndex     = 1,    -- Beli unit ke-1 (paling kiri) ke-3 (paling kanan)
+    MysteryUnitLimit     = 1,    -- Limit 6 (0 = Unlimited)
     
     LoopDelay            = 1     
 }
