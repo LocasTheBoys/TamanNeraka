@@ -39,7 +39,7 @@ local scriptsByPlaceId = {
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"
     },
     [LOBBY_PLACE_ID] = {
-        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V1", -- auto join lobby
+        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V2", -- auto join lobby
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/ANTI_AFK",
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"
     }
