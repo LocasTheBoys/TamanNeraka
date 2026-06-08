@@ -8,8 +8,9 @@ local Config = {
     
     -- [ UNIT SEEDS CONFIG ]
     UnitsToBuy = {
-        { Name = "unit_lava_trunk", Limit = 4 },
-        { Name = "unit_meteor_plant", Limit = 4 }
+        { Name = "dp_bndl_mar26", Limit = 4 },
+        { Name = "unit_lava_trunk", Limit = 1 },
+        { Name = "unit_meteor_plant", Limit = 1 }
     },
 
     -- [ MYSTERY TRADER CONFIG ]
