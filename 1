@@ -1,0 +1,18 @@
+wait(1)
+--print("script run")
+print("Full Script Is Running")
+local function executeScripts(scripts)
+    for _, script in ipairs(scripts) do
+        local co = coroutine.create(function()
+            loadstring(game:HttpGet(script))()
+        end)
+        coroutine.resume(co)
+    end
+end
+
+local scripts = {
+    "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1",
+    "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"--test
+}
+
+executeScripts(scripts)
