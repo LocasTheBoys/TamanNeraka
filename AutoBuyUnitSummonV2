@@ -1,0 +1,359 @@
+-- ==========================================
+-- AUTO GACHA UNIT SCRIPT V18 (INDESTRUCTIBLE EDITION)
+-- ==========================================
+
+if getgenv().AutoGacha_V18_Running then
+    getgenv().AutoGacha_ScriptRunning = false
+    task.wait(0.5) 
+end
+getgenv().AutoGacha_V18_Running = true
+getgenv().AutoGacha_ScriptRunning = true
+
+local BoxData = {
+    {Name = "Classic 1 Summon",   ID = "ub_classic", BuyID = "ub_classic"},
+    {Name = "Classic 2 Summon",   ID = "ub_classic", BuyID = "ub_classic_v8"},
+    {Name = "Enchanted Summon",   ID = "ub_jungle", BuyID = "ub_jungle"},
+    {Name = "Sun Summon",         ID = "ub_sun", BuyID = "ub_sun"},
+    {Name = "Astral Summon",      ID = "ub_astral", BuyID = "ub_astral"},
+    {Name = "Mushroom Summon",    ID = "ub_mushroom", BuyID = "ub_mushroom"},
+    {Name = "Crystal Summon",     ID = "ub_crystal", BuyID = "ub_crystal"},
+    {Name = "Tropical Summon",    ID = "ub_tropical", BuyID = "ub_tropical"},
+    {Name = "Bee Summon",         ID = "ub_bee", BuyID = "ub_bee"},
+    {Name = "Corrupted Summon",   ID = "ub_corrupted", BuyID = "ub_corrupted"},
+    {Name = "Greenhouse Summon",  ID = "ub_greenhouse", BuyID = "ub_greenhouse"},
+    {Name = "Aqua Summon",        ID = "ub_underwater", BuyID = "ub_underwater"},
+    {Name = "Galaxy Summon",      ID = "ub_space", BuyID = "ub_space"},
+    --{Name = "Lucky 1 Summon",     ID = "ub_lucky_1", BuyID = "ub_lucky_1"},
+    --{Name = "Lucky 2 Summon",     ID = "ub_lucky_2", BuyID = "ub_lucky_2"},
+    --{Name = "Lucky 3 Summon",     ID = "ub_lucky_3", BuyID = "ub_lucky_3"},
+    --{Name = "Lucky 4 Summon",     ID = "ub_lucky_4", BuyID = "ub_lucky_4"},
+    --{Name = "Rainbow Summon",     ID = "ub_rainbow", BuyID = "ub_rainbow"},--bisa tpi uang kurang
+    --{Name = "Anime Summon",       ID = "ub_anime", BuyID = "ub_anime"},
+    --{Name = "Halloween Summon",   ID = "ub_halloween", BuyID = "ub_halloween"},
+    --{Name = "Christmas Summon",   ID = "ub_christmas", BuyID = "ub_christmas"},
+    --{Name = "Easter Summon",      ID = "ub_easter", BuyID = "ub_easter"},--bisa tpi uang kurang
+    {Name = "Volcano Summon",     ID = "ub_volcano",   BuyID = "ub_volcano"}
+}
+
+local Config = {
+    AutoOn = false,           
+    StartMinimized = true,        
+    BypassGUI = false,            
+    BoxID = BoxData[1].ID,         
+    BuyBoxID = BoxData[1].BuyID,   
+    OpenAmount = 1,               
+    DelayPerGacha = 1.5,      
+    DeleteRarity = {
+        Common = true, Uncommon = true, Rare = true,
+        Epic = true, Legendary = false, Godly = false
+    }
+}
+
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
+
+local isScriptOn = Config.AutoOn
+
+-- ==========================================
+-- 1. MINIMALIST GUI CREATION
+-- ==========================================
+local guiName = "AutoGachaDetectorV18"
+local container = (RunService:IsStudio()) and Player.PlayerGui or CoreGui
+if container:FindFirstChild(guiName) then container[guiName]:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = guiName; ScreenGui.Parent = container
+
+local MainFrame = Instance.new("Frame")
+MainFrame.AnchorPoint = Vector2.new(1, 0.5)
+MainFrame.Position = UDim2.new(1, -20, 0.65, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+MainFrame.BorderSizePixel = 0; MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+local TitleBar = Instance.new("Frame"); TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20); TitleBar.BorderSizePixel = 0; TitleBar.Parent = MainFrame
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 8)
+local TitleBarPatch = Instance.new("Frame"); TitleBarPatch.BackgroundColor3 = Color3.fromRGB(15, 15, 20); TitleBarPatch.Size = UDim2.new(1, 0, 0, 10); TitleBarPatch.Position = UDim2.new(0, 0, 1, -10); TitleBarPatch.BorderSizePixel = 0; TitleBarPatch.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel"); TitleText.Size = UDim2.new(1, -60, 1, 0); TitleText.Position = UDim2.new(0, 10, 0, 0); TitleText.BackgroundTransparency = 1; TitleText.Text = "Auto Gacha V18"; TitleText.TextColor3 = Color3.fromRGB(255, 255, 255); TitleText.Font = Enum.Font.GothamBold; TitleText.TextSize = 13; TitleText.TextXAlignment = Enum.TextXAlignment.Left; TitleText.Parent = TitleBar
+local MinimizeBtn = Instance.new("TextButton"); MinimizeBtn.BackgroundTransparency = 1; MinimizeBtn.Text = "-"; MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200); MinimizeBtn.Font = Enum.Font.GothamBold; MinimizeBtn.TextSize = 18; MinimizeBtn.Parent = TitleBar
+local CloseBtn = Instance.new("TextButton"); CloseBtn.BackgroundTransparency = 1; CloseBtn.Text = "X"; CloseBtn.TextColor3 = Color3.fromRGB(255, 75, 75); CloseBtn.Font = Enum.Font.GothamBold; CloseBtn.TextSize = 14; CloseBtn.Parent = TitleBar
+
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, 0, 1, -30); ContentFrame.Position = UDim2.new(0, 0, 0, 30); ContentFrame.BackgroundTransparency = 1; ContentFrame.Parent = MainFrame
+
+local TopRow = Instance.new("Frame"); TopRow.Size = UDim2.new(1, -20, 0, 30); TopRow.Position = UDim2.new(0, 10, 0, 10); TopRow.BackgroundTransparency = 1; TopRow.Parent = ContentFrame
+local DropdownBtn = Instance.new("TextButton"); DropdownBtn.Size = UDim2.new(0.75, -5, 1, 0); DropdownBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45); DropdownBtn.TextColor3 = Color3.fromRGB(255, 255, 255); DropdownBtn.Font = Enum.Font.GothamSemibold; DropdownBtn.TextSize = 12; DropdownBtn.Text = BoxData[1].Name; DropdownBtn.Parent = TopRow
+Instance.new("UICorner", DropdownBtn).CornerRadius = UDim.new(0, 4)
+local AmountBtn = Instance.new("TextButton"); AmountBtn.Size = UDim2.new(0.25, 0, 1, 0); AmountBtn.Position = UDim2.new(0.75, 5, 0, 0); AmountBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45); AmountBtn.TextColor3 = Color3.fromRGB(100, 200, 255); AmountBtn.Font = Enum.Font.GothamBold; AmountBtn.TextSize = 12; AmountBtn.Text = Config.OpenAmount .. "x"; AmountBtn.Parent = TopRow
+Instance.new("UICorner", AmountBtn).CornerRadius = UDim.new(0, 4)
+
+local BypassBtn = Instance.new("TextButton")
+BypassBtn.Size = UDim2.new(1, -20, 0, 22); BypassBtn.Position = UDim2.new(0, 10, 0, 45); BypassBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40); BypassBtn.TextColor3 = Color3.fromRGB(180, 180, 180); BypassBtn.Font = Enum.Font.GothamSemibold; BypassBtn.TextSize = 10; BypassBtn.Text = "[ ] Bypass Off-Rotation (No Delete)"; BypassBtn.Parent = ContentFrame
+Instance.new("UICorner", BypassBtn).CornerRadius = UDim.new(0, 4)
+local UIStrokeBypass = Instance.new("UIStroke", BypassBtn); UIStrokeBypass.Thickness = 1; UIStrokeBypass.Color = Color3.fromRGB(60,60,65)
+
+local function UpdateBypassUI()
+    if Config.BypassGUI then
+        BypassBtn.Text = "[✓] Bypass Mode (Raw Spam)"; BypassBtn.TextColor3 = Color3.fromRGB(255, 100, 100); UIStrokeBypass.Color = Color3.fromRGB(255, 100, 100)
+    else
+        BypassBtn.Text = "[ ] Bypass Off-Rotation (No Delete)"; BypassBtn.TextColor3 = Color3.fromRGB(180, 180, 180); UIStrokeBypass.Color = Color3.fromRGB(60,60,65)
+    end
+end
+BypassBtn.MouseButton1Click:Connect(function() Config.BypassGUI = not Config.BypassGUI; UpdateBypassUI() end)
+
+local DropdownList = Instance.new("ScrollingFrame")
+DropdownList.Size = UDim2.new(0.75, -5, 0, 125) 
+DropdownList.Position = UDim2.new(0, 10, 0, 42)
+DropdownList.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+DropdownList.BorderSizePixel = 0; DropdownList.ZIndex = 10; DropdownList.Visible = false; DropdownList.ScrollBarThickness = 4 
+DropdownList.CanvasSize = UDim2.new(0, 0, 0, #BoxData * 25) 
+DropdownList.Parent = ContentFrame
+Instance.new("UICorner", DropdownList).CornerRadius = UDim.new(0, 4)
+
+local ListLayout = Instance.new("UIListLayout", DropdownList); ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+for i, box in ipairs(BoxData) do
+    local opt = Instance.new("TextButton"); opt.Size = UDim2.new(1, 0, 0, 25); opt.BackgroundTransparency = 1; opt.ZIndex = 11; opt.TextColor3 = Color3.fromRGB(220, 220, 220); opt.Font = Enum.Font.Gotham; opt.TextSize = 11; opt.Text = box.Name; opt.Parent = DropdownList
+    opt.MouseButton1Click:Connect(function()
+        Config.BoxID = box.ID; Config.BuyBoxID = box.BuyID; DropdownBtn.Text = box.Name; DropdownList.Visible = false
+    end)
+end
+
+DropdownBtn.MouseButton1Click:Connect(function() DropdownList.Visible = not DropdownList.Visible end)
+AmountBtn.MouseButton1Click:Connect(function() Config.OpenAmount = (Config.OpenAmount == 1) and 10 or 1; AmountBtn.Text = Config.OpenAmount .. "x" end)
+
+local LedContainer = Instance.new("Frame"); LedContainer.Size = UDim2.new(1, -20, 0, 160); LedContainer.Position = UDim2.new(0, 10, 0, 75); LedContainer.BackgroundTransparency = 1; LedContainer.Parent = ContentFrame
+local LedLayout = Instance.new("UIListLayout", LedContainer); LedLayout.SortOrder = Enum.SortOrder.LayoutOrder; LedLayout.Padding = UDim.new(0, 5)
+
+local RarityColors = { Common = Color3.fromRGB(150, 150, 150), Uncommon = Color3.fromRGB(85, 170, 255), Rare = Color3.fromRGB(85, 255, 0), Epic = Color3.fromRGB(255, 170, 0), Legendary = Color3.fromRGB(255, 50, 50), Godly = Color3.fromRGB(255, 50, 255) }
+local RarityOrder = {"Common", "Uncommon", "Rare", "Epic", "Legendary", "Godly"}
+
+for _, rarity in ipairs(RarityOrder) do
+    local RowBtn = Instance.new("TextButton"); RowBtn.Size = UDim2.new(1, 0, 0, 20); RowBtn.BackgroundTransparency = 1; RowBtn.Text = ""; RowBtn.Parent = LedContainer
+    local RarityLbl = Instance.new("TextLabel"); RarityLbl.Size = UDim2.new(1, -30, 1, 0); RarityLbl.Position = UDim2.new(0, 5, 0, 0); RarityLbl.BackgroundTransparency = 1; RarityLbl.Text = rarity; RarityLbl.TextColor3 = RarityColors[rarity]; RarityLbl.Font = Enum.Font.GothamSemibold; RarityLbl.TextSize = 12; RarityLbl.TextXAlignment = Enum.TextXAlignment.Left; RarityLbl.Parent = RowBtn
+    
+    local LED = Instance.new("Frame"); LED.Size = UDim2.new(0, 12, 0, 12); LED.Position = UDim2.new(1, -15, 0.5, -6); LED.Parent = RowBtn
+    Instance.new("UICorner", LED).CornerRadius = UDim.new(1, 0)
+    local UIStroke = Instance.new("UIStroke", LED); UIStroke.Thickness = 1; UIStroke.Color = Color3.fromRGB(0,0,0)
+
+    local function UpdateLED()
+        if Config.DeleteRarity[rarity] then LED.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        else LED.BackgroundColor3 = Color3.fromRGB(50, 255, 50) end
+    end
+    UpdateLED()
+    RowBtn.MouseButton1Click:Connect(function() Config.DeleteRarity[rarity] = not Config.DeleteRarity[rarity]; UpdateLED() end)
+end
+
+local ToggleMainBtn = Instance.new("TextButton"); ToggleMainBtn.Size = UDim2.new(1, -20, 0, 35); ToggleMainBtn.Position = UDim2.new(0, 10, 1, -45); ToggleMainBtn.Font = Enum.Font.GothamBold; ToggleMainBtn.TextSize = 14; ToggleMainBtn.Parent = ContentFrame
+Instance.new("UICorner", ToggleMainBtn).CornerRadius = UDim.new(0, 6)
+
+local function updateToggleMainBtn()
+    ToggleMainBtn.BackgroundColor3 = isScriptOn and Color3.fromRGB(75, 255, 75) or Color3.fromRGB(255, 75, 75)
+    ToggleMainBtn.Text = isScriptOn and "STOP GACHA" or "START GACHA"
+    ToggleMainBtn.TextColor3 = isScriptOn and Color3.fromRGB(0,0,0) or Color3.fromRGB(255,255,255)
+end
+ToggleMainBtn.MouseButton1Click:Connect(function() isScriptOn = not isScriptOn; updateToggleMainBtn() end)
+
+local isMinimized = Config.StartMinimized
+local function updateUIState()
+    if isMinimized then
+        MainFrame.Size = UDim2.new(0, 40, 0, 40); TitleBar.Size = UDim2.new(1, 0, 1, 0)
+        TitleText.Visible = false; CloseBtn.Visible = false; ContentFrame.Visible = false
+        MinimizeBtn.Size = UDim2.new(1, 0, 1, 0); MinimizeBtn.Position = UDim2.new(0, 0, 0, 0); MinimizeBtn.Text = "+"
+    else
+        MainFrame.Size = UDim2.new(0, 220, 0, 340); TitleBar.Size = UDim2.new(1, 0, 0, 30)
+        TitleText.Visible = true; CloseBtn.Visible = true; ContentFrame.Visible = true
+        MinimizeBtn.Size = UDim2.new(0, 30, 0, 30); MinimizeBtn.Position = UDim2.new(1, -60, 0, 0); MinimizeBtn.Text = "-"
+        CloseBtn.Size = UDim2.new(0, 30, 0, 30); CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+    end
+end
+updateUIState(); updateToggleMainBtn()
+
+local dragging, dragInput, dragStart, startPos
+local function makeDraggable(guiObj)
+    guiObj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+        end
+    end)
+    guiObj.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end end)
+end
+
+makeDraggable(TitleBar)
+makeDraggable(MinimizeBtn)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart; MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+MinimizeBtn.MouseButton1Click:Connect(function() isMinimized = not isMinimized; updateUIState() end)
+CloseBtn.MouseButton1Click:Connect(function() getgenv().AutoGacha_ScriptRunning = false; ScreenGui:Destroy() end)
+
+-- ==========================================
+-- 2. CORE LOGIC (SAFE & INDESTRUCTIBLE)
+-- ==========================================
+
+local function VirtualClick(guiObj)
+    if not guiObj then return end
+    local inset, _ = GuiService:GetGuiInset()
+    local pos, size = guiObj.AbsolutePosition, guiObj.AbsoluteSize
+    local cx, cy = pos.X + (size.X / 2), pos.Y + (size.Y / 2) + inset.Y 
+    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, true, game, 0); task.wait(0.1)
+    VirtualInputManager:SendMouseButtonEvent(cx, cy, 0, false, game, 0)
+end
+
+local function GetExactRarity(item)
+    local rarity = "Unknown"
+    pcall(function()
+        if item:IsA("ImageButton") or item:IsA("ImageLabel") then
+            local c3 = item.ImageColor3
+            local r = math.floor(c3.R * 255 + 0.5); local g = math.floor(c3.G * 255 + 0.5); local b = math.floor(c3.B * 255 + 0.5)
+
+            if math.abs(r - 171) <= 10 and math.abs(g - 171) <= 10 and math.abs(b - 171) <= 10 then rarity = "Common"
+            elseif math.abs(r - 85) <= 10 and math.abs(g - 170) <= 10 and math.abs(b - 255) <= 10 then rarity = "Uncommon"
+            elseif math.abs(r - 85) <= 10 and math.abs(g - 255) <= 10 and math.abs(b - 0) <= 10 then rarity = "Rare"
+            elseif math.abs(r - 255) <= 10 and math.abs(g - 170) <= 10 and math.abs(b - 0) <= 10 then rarity = "Epic"
+            elseif math.abs(r - 255) <= 10 and math.abs(g - 0) <= 10 and math.abs(b - 0) <= 10 then rarity = "Legendary"
+            elseif math.abs(r - 255) <= 10 and math.abs(g - 0) <= 10 and math.abs(b - 255) <= 10 then rarity = "Godly"
+            end
+        end
+    end)
+    return rarity
+end
+
+-- [FIX] Hilangkan Wait() yang bikin Stuck!
+local function TeleportToGacha()
+    local character = Player.Character
+    if not character then return end -- Skip jika karakter tidak ada
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local gachaPart = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Interactions") and workspace.Map.Interactions:FindFirstChild("SummonUnits") and workspace.Map.Interactions.SummonUnits:FindFirstChild("MeshPart")
+    if hrp and gachaPart then hrp.CFrame = gachaPart.CFrame end
+end
+
+local function UnstuckProtocol()
+    local character = Player.Character
+    local hrp = character and character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        print("[Auto Gacha] DETEKSI STUCK! Mengeksekusi Auto-Unstuck Protocol...")
+        hrp.CFrame = CFrame.new(52.5576591, 65.1422272, 1039.36169, 0.243437305, -3.43445059e-08, -0.969916642, 1.19248583e-07, 1, -5.47980283e-09, 0.969916642, -1.143272e-07, 0.243437305)
+        task.wait(2.5)
+        TeleportToGacha()
+        task.wait(2)
+    end
+end
+
+local function AutoTransitionMenu(shopMiddle)
+    pcall(function()
+        if shopMiddle.BoxPicker.Visible then
+            local targetBoxUI = shopMiddle.BoxPicker.Frame:FindFirstChild(Config.BoxID)
+            if targetBoxUI then VirtualClick(targetBoxUI) end
+        end
+    end)
+end
+
+local function SetupAutoBanViaClick(shopMiddle)
+    pcall(function()
+        local itemsFolder = shopMiddle.UnitShop.Frame.Top.Items
+        local retry = 0
+        while #itemsFolder:GetChildren() <= 1 and retry < 10 do task.wait(0.5); retry = retry + 1 end
+
+        for _, item in ipairs(itemsFolder:GetChildren()) do
+            if string.find(item.Name, "unit_") then
+                local rarity = GetExactRarity(item)
+                local f1 = item:FindFirstChild("Frame")
+                local imgColor = f1 and f1:FindFirstChild("ImageLabel")
+                local f2 = imgColor and imgColor:FindFirstChild("Frame")
+                local redX = f2 and f2:FindFirstChild("ImageLabel")
+                
+                if redX and rarity ~= "Unknown" then
+                    local wantToDelete = Config.DeleteRarity[rarity] == true
+                    local isCurrentlyDeleted = (math.floor(redX.ImageTransparency) == 0)
+                    
+                    if (wantToDelete and not isCurrentlyDeleted) or (not wantToDelete and isCurrentlyDeleted) then
+                        VirtualClick(item)
+                        task.wait(0.3) 
+                    end
+                end
+            end
+        end
+    end)
+end
+
+local function DoBuyGacha()
+    task.spawn(function()
+        pcall(function()
+            local args = { Config.BuyBoxID, Config.OpenAmount }
+            ReplicatedStorage:WaitForChild("RemoteFunctions"):WaitForChild("BuyUnitBox"):InvokeServer(unpack(args))
+        end)
+    end)
+end
+
+-- ==========================================
+-- 4. MAIN LOOP WITH SAFE WATCHDOG (INDESTRUCTIBLE)
+-- ==========================================
+task.spawn(function()
+    local lastActivity = tick()
+
+    while getgenv().AutoGacha_ScriptRunning do
+        task.wait(0.5)
+        
+        if isScriptOn then
+            -- [FIX] Seluruh logika dibungkus pcall agar mustahil crash
+            local success, err = pcall(function()
+                if tick() - lastActivity > 25 then
+                    UnstuckProtocol()
+                    lastActivity = tick() 
+                end
+
+                -- [FIX] Pengecekan UI Super Aman
+                local pGui = Player:FindFirstChild("PlayerGui")
+                if not pGui then return end
+                local gameGui = pGui:FindFirstChild("GameGui")
+                if not gameGui then return end
+                local shopMiddle = gameGui.Screen.Middle:FindFirstChild("UnitShop")
+                if not shopMiddle then return end
+
+                if Config.BypassGUI then
+                    DoBuyGacha()
+                    lastActivity = tick() 
+                    task.wait(Config.DelayPerGacha)
+                else
+                    if not shopMiddle.UnitShop.Visible then
+                        TeleportToGacha(); task.wait(1) 
+                        AutoTransitionMenu(shopMiddle); task.wait(1.5) 
+                    end
+                    
+                    if shopMiddle.UnitShop.Visible then
+                        SetupAutoBanViaClick(shopMiddle)
+                        
+                        while isScriptOn and getgenv().AutoGacha_ScriptRunning and not Config.BypassGUI do
+                            if not shopMiddle.UnitShop.Visible then break end
+                            DoBuyGacha()
+                            lastActivity = tick() 
+                            task.wait(Config.DelayPerGacha)
+                        end
+                    end
+                end
+            end)
+            
+            if not success then
+                print("[Auto Gacha ERROR] Silent Crash Dicegah: " .. tostring(err))
+            end
+        else
+            lastActivity = tick() 
+        end
+    end
+end)
+
+print("[Auto Gacha] V18 Loaded! Anti-Stuck is Indestructible now.")
