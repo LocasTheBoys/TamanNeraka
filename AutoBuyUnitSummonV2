@@ -42,7 +42,7 @@ local Config = {
     BoxID = BoxData[1].ID,         
     BuyBoxID = BoxData[1].BuyID,   
     OpenAmount = 1,               
-    DelayPerGacha = 1.5,      
+    DelayPerGacha = 0.5,      
     DeleteRarity = {
         Common = true, Uncommon = true, Rare = true,
         Epic = true, Legendary = false, Godly = false
