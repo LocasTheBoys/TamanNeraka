@@ -2,4 +2,4 @@
 --loadstring(game:HttpGet("https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoBuyUnitSummonV2"))()
 
 
---loadstring(game:HttpGet("https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/Map_Hell_V3"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/Map_Hell_V3"))()
