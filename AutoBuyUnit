@@ -8,7 +8,7 @@ local Config = {
     
     -- [ UNIT SEEDS CONFIG ]
     UnitsToBuy = {
-        { Name = "dp_bndl_mar26", Limit = 4 },
+        { Name = "unit_birthday_cake", Limit = 2 },
         { Name = "unit_lava_trunk", Limit = 1 },
         { Name = "unit_meteor_plant", Limit = 1 }
     },
