@@ -45,7 +45,7 @@ local Config = {
     DelayPerGacha = 0.5,      
     DeleteRarity = {
         Common = true, Uncommon = true, Rare = true,
-        Epic = true, Legendary = false, Godly = false
+        Epic = true, Legendary = true, Godly = false
     }
 }
 
