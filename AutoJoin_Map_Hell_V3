@@ -6,8 +6,8 @@
 -- [G] CONFIGURATION
 -- ==========================================
 local Config = {
-    AutoStart            = true,
-    UseFirstTeleport     = false,          -- true = Wajib teleport ke lokasi awal dulu / false = langsung ke DOORS
+    AutoStart            = false,
+    UseFirstTeleport     = true,          -- true = Wajib teleport ke lokasi awal dulu / false = langsung ke DOORS
     DefaultStateMinimize = true,          -- true = Badge kecil [+] / false = Panel terbuka
     
     TargetMap            = "map_volcano", -- ID Map yang ingin dimainkan
