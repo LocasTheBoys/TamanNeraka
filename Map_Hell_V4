@@ -40,8 +40,8 @@ local scriptsByPlaceId = {
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"
     },
     [LOBBY_PLACE_ID] = {
-        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V3", -- auto join tidak otomatis
-        --"https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V1", -- auto join otomatis 1 player (solo)
+        --"https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V3", -- auto join tidak otomatis
+        "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AutoJoin_Map_Hell_V1", -- auto join otomatis 1 player (solo)
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/ANTI_AFK",
         "https://raw.githubusercontent.com/LocasTheBoys/TamanNeraka/refs/heads/main/AntiDC_V1"
     }
