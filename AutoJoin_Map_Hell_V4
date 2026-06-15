@@ -1,0 +1,497 @@
+-- ==========================================
+-- AUTO JOINER V4 & REJOIN OLD GAME V5 NEW
+-- ==========================================
+
+-- ==========================================
+-- [G] CONFIGURATION
+-- ==========================================
+local Config = {
+    AutoStart            = true,
+    AutoJoinOldGame      = true,          -- true = Prioritaskan join server lama / false = langsung cari DOORS
+    UseFirstTeleport     = true,          -- true = Wajib teleport ke lokasi awal dulu / false = langsung ke DOORS
+    DefaultStateMinimize = true,          -- true = Badge kecil [+] / false = Panel terbuka
+    
+    TargetMap            = "map_volcano", -- ID Map yang ingin dimainkan
+    TargetDifficulty     = "dif_easy",    -- dif_easy, dif_normal, dll
+    MaxPlayers           = 1,             -- Jumlah maksimal player (1 = Solo)
+    
+    LobbyPlaceId         = 108533757090220
+}
+
+local FIRST_TELEPORTS = {
+    --CFrame.new(121.580482, 66.0622635, 798.123169, -0.952736616, -2.15851319e-08, -0.303797513, -1.56706541e-08, 1, -2.19064518e-08, 0.303797513, -1.61103735e-08, -0.952736616), -- game biasa
+    CFrame.new(149.548492, 66.0672607, 799.664795, 0.733149707, 2.40188562e-08, -0.680067301, -2.13755964e-08, 1, 1.22742918e-08, 0.680067301, 5.53795099e-09, 0.733149707) -- hell
+}
+
+local DOORS = {
+    { CF = CFrame.new(170.263336, 72.2857971, 792.448059, -0.195122838, 0, -0.980778813, 0, 1, 0, 0.980778813, 0, -0.195122838), RemoteIndex = "7" },
+    { CF = CFrame.new(156.334229, 72.2857971, 789.650024, 0.195122838, 0, 0.980778813, 0, 1, 0, -0.980778813, 0, 0.195122853), RemoteIndex = "8" },
+    { CF = CFrame.new(172.604416, 72.2857971, 780.67865, -0.195122838, 0, -0.980778813, 0, 1, 0, 0.980778813, 0, -0.195122838), RemoteIndex = "9" },
+    { CF = CFrame.new(158.675308, 72.2857971, 777.880554, 0.195122838, 0, 0.980778813, 0, 1, 0, -0.980778813, 0, 0.195122838), RemoteIndex = "10" }
+}
+
+-- CONFIG PATH DAN DETEKSI OLD GAME (DIAMBIL DARI V5)
+local PathConfig = {
+    NotifyFolderName     = "Re:NotifyClient",
+    LabelChildName       = "Label",
+    MatchLabelText       = "Match still in progress",
+    OptionsChildName     = "Options",
+    AcceptChildName      = "Accept",
+    AcceptWaitTimeout    = 5,
+    LabelWaitTimeout     = 3,
+    LabelTextWaitTimeout = 5
+}
+
+-- ==========================================
+-- SERVICES & VARIABLES
+-- ==========================================
+local CoreGui           = game:GetService("CoreGui")
+local Players           = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService  = game:GetService("UserInputService")
+local LocalPlayer       = Players.LocalPlayer
+local PlayerGui         = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Status kontrol otomatisasi internal
+local isRunning         = Config.AutoStart
+local isMinimized       = Config.DefaultStateMinimize
+local activeRemoteIndex = nil
+
+-- State penampung deteksi server lama
+local currentFoundUUID  = nil
+local currentFoundFrame = nil
+local oldGameDetected   = false
+local oldGameTimeoutReached = false
+
+-- ==========================================
+-- FIRST TELEPORT LOGIC
+-- ==========================================
+if Config.UseFirstTeleport then
+    task.spawn(function()
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart", 5)
+        if hrp then
+            local randomDest = FIRST_TELEPORTS[math.random(1, #FIRST_TELEPORTS)]
+            hrp.CFrame = randomDest
+            task.wait(1.5)
+        end
+    end)
+end
+
+-- ==========================================
+-- GUI SETUP (MENGGUNAKAN BASIS GUI KAMU)
+-- ==========================================
+pcall(function()
+    if CoreGui:FindFirstChild("AutoJoinerV4") then
+        CoreGui.AutoJoinerV4:Destroy()
+    end
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutoJoinerV4"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+local MainContainer = Instance.new("Frame")
+MainContainer.Size = UDim2.new(0, 220, 0, 160)
+MainContainer.Position = UDim2.new(0, 20, 0.5, -80)
+MainContainer.BackgroundTransparency = 1
+MainContainer.Parent = ScreenGui
+
+local MainPanel = Instance.new("Frame")
+MainPanel.Size = UDim2.new(1, 0, 1, 0)
+MainPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainPanel.Visible = not isMinimized
+MainPanel.Parent = MainContainer
+Instance.new("UICorner", MainPanel).CornerRadius = UDim.new(0, 8)
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 30)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TopBar.Parent = MainPanel
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -40, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Auto Joiner V4"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0, 30, 0, 30)
+HideBtn.Position = UDim2.new(1, -30, 0, 0)
+HideBtn.BackgroundTransparency = 1
+HideBtn.Text = "—"
+HideBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+HideBtn.Font = Enum.Font.GothamBold
+HideBtn.TextSize = 14
+HideBtn.Parent = TopBar
+
+local MiniBtn = Instance.new("TextButton")
+MiniBtn.Size = UDim2.new(0, 45, 0, 45)
+MiniBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+MiniBtn.Text = "+"
+MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBtn.Font = Enum.Font.GothamBold
+MiniBtn.TextSize = 24
+MiniBtn.Visible = isMinimized
+MiniBtn.Parent = MainContainer
+Instance.new("UICorner", MiniBtn).CornerRadius = UDim.new(0, 8)
+
+local MapInfoLabel = Instance.new("TextLabel")
+MapInfoLabel.Size = UDim2.new(1, -20, 0, 20)
+MapInfoLabel.Position = UDim2.new(0, 10, 0, 40)
+MapInfoLabel.BackgroundTransparency = 1
+MapInfoLabel.Text = "Map: Menunggu..."
+MapInfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+MapInfoLabel.Font = Enum.Font.Gotham
+MapInfoLabel.TextSize = 12
+MapInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+MapInfoLabel.Parent = MainPanel
+
+local PlayerInfoLabel = Instance.new("TextLabel")
+PlayerInfoLabel.Size = UDim2.new(1, -20, 0, 20)
+PlayerInfoLabel.Position = UDim2.new(0, 10, 0, 60)
+PlayerInfoLabel.BackgroundTransparency = 1
+PlayerInfoLabel.Text = "Players: 0 / " .. tostring(Config.MaxPlayers)
+PlayerInfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+PlayerInfoLabel.Font = Enum.Font.Gotham
+PlayerInfoLabel.TextSize = 12
+PlayerInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+PlayerInfoLabel.Parent = MainPanel
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+StatusLabel.Position = UDim2.new(0, 10, 0, 80)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Idle"
+StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 80)
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.TextSize = 12
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = MainPanel
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(1, -20, 0, 30)
+ToggleBtn.Position = UDim2.new(0, 10, 0, 115)
+ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+ToggleBtn.Parent = MainPanel
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+local function ToggleUI()
+    isMinimized = not isMinimized
+    MainPanel.Visible = not isMinimized
+    MiniBtn.Visible = isMinimized
+end
+HideBtn.MouseButton1Click:Connect(ToggleUI)
+MiniBtn.MouseButton1Click:Connect(ToggleUI)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    ToggleBtn.BackgroundColor3 = isRunning and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+    ToggleBtn.Text = isRunning and "AUTO: ON" or "AUTO: OFF"
+    if not isRunning then StatusLabel.Text = "Status: PAUSED" end
+end)
+
+-- SYSTEM DRAG
+local function MakeDraggable(dragHandle)
+    local dragging, dragInput, dragStart, startPos
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainContainer.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            MainContainer.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+MakeDraggable(TopBar)
+MakeDraggable(MiniBtn)
+
+-- ==========================================
+-- HELPERS & VIRTUAL CLICK
+-- ==========================================
+local function getPath(parent, pathArray)
+    local current = parent
+    for _, name in ipairs(pathArray) do
+        if not current then return nil end
+        current = current:FindFirstChild(name)
+    end
+    return current
+end
+
+local function fireRemote(remoteName, ...)
+    local remote = getPath(ReplicatedStorage, {"RemoteFunctions", remoteName})
+    if remote then
+        local args = {...}
+        pcall(function() remote:InvokeServer(unpack(args)) end)
+        return true
+    end
+    return false
+end
+
+local function VirtualClick(button)
+    if not button then return end
+    if typeof(firesignal) == "function" then
+        pcall(function() firesignal(button.MouseButton1Click) end)
+        pcall(function() firesignal(button.Activated) end)
+    end
+    if typeof(getconnections) == "function" then
+        for _, sigName in ipairs({"MouseButton1Click", "Activated"}) do
+            pcall(function()
+                local conns = getconnections(button[sigName])
+                if conns then
+                    for _, c in ipairs(conns) do
+                        pcall(function() c:Fire() end)
+                    end
+                end
+            end)
+        end
+    end
+end
+
+-- ==========================================
+-- AUTO JOIN OLD GAME CORE LOGIC (V5 METHOD)
+-- ==========================================
+local function getAcceptButton(notifFrame)
+    if not notifFrame or not notifFrame.Parent then return nil end
+    local options = notifFrame:WaitForChild(PathConfig.OptionsChildName, PathConfig.AcceptWaitTimeout)
+    if not options then return nil end
+    local accept = options:WaitForChild(PathConfig.AcceptChildName, PathConfig.AcceptWaitTimeout)
+    return accept
+end
+
+local function executeRejoin()
+    if not currentFoundUUID or currentFoundUUID == "" then return false end
+    
+    local clickedViaGui = false
+    if currentFoundFrame and currentFoundFrame.Parent then
+        local accept = getAcceptButton(currentFoundFrame)
+        if accept then
+            VirtualClick(accept)
+            clickedViaGui = true
+        end
+    end
+    
+    -- Fallback via Remote jika klik UI bermasalah
+    if not clickedViaGui then
+        local reEvent = ReplicatedStorage:FindFirstChild("ReNotifyEvent")
+        if reEvent then
+            pcall(function()
+                reEvent:FireServer("NotificationOptionSelected", currentFoundUUID, "Accept")
+            end)
+            clickedViaGui = true
+        end
+    end
+    return clickedViaGui
+end
+
+local function confirmAndExecuteOldGame(child)
+    currentFoundUUID = child.Name
+    currentFoundFrame = child
+    oldGameDetected = true
+    
+    StatusLabel.Text = "Status: Rejoining Old Server..."
+    StatusLabel.TextColor3 = Color3.fromRGB(85, 255, 127)
+    
+    executeRejoin()
+end
+
+local function handleNotification(child)
+    if not child or not child:IsA("GuiObject") then return end
+    local label = child:WaitForChild(PathConfig.LabelChildName, PathConfig.LabelWaitTimeout)
+    if not label or not label:IsA("TextLabel") then return end
+
+    if label.Text == PathConfig.MatchLabelText then
+        confirmAndExecuteOldGame(child)
+        return
+    end
+
+    -- Watcher perubahan teks bila telat terisi
+    local fired = false
+    local conn
+    conn = label:GetPropertyChangedSignal("Text"):Connect(function()
+        if fired then return end
+        if label.Text == PathConfig.MatchLabelText then
+            fired = true
+            if conn then conn:Disconnect() end
+            confirmAndExecuteOldGame(child)
+        end
+    end)
+
+    task.spawn(function()
+        local t = 0
+        while not fired and child.Parent and t < PathConfig.LabelTextWaitTimeout do
+            task.wait(0.25)
+            t = t + 0.25
+        end
+        if not fired and conn then conn:Disconnect() end
+    end)
+end
+
+-- Memulai Deteksi Folder Re:NotifyClient
+if Config.AutoJoinOldGame then
+    task.spawn(function()
+        local notifyFolder = PlayerGui:WaitForChild(PathConfig.NotifyFolderName, PathConfig.NotifyFolderTimeout)
+        if notifyFolder then
+            for _, child in ipairs(notifyFolder:GetChildren()) do
+                task.spawn(handleNotification, child)
+            end
+            
+            notifyFolder.ChildAdded:Connect(function(child)
+                task.spawn(handleNotification, child)
+            end)
+            
+            notifyFolder.ChildRemoved:Connect(function(child)
+                if child == currentFoundFrame then
+                    currentFoundFrame = nil
+                    currentFoundUUID = nil
+                end
+            end)
+        end
+    end)
+    
+    -- Timer Pengaman: Tunggu 10 detik untuk kemunculan Old Game Rejoin
+    task.spawn(function()
+        local elapsed = 0
+        while elapsed < 10 and not oldGameDetected do
+            if isRunning then
+                StatusLabel.Text = "Status: Memantau Old Game (".. tostring(10 - elapsed) .."s)..."
+                StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 80)
+            end
+            task.wait(1)
+            elapsed = elapsed + 1
+        end
+        oldGameTimeoutReached = true
+    end)
+end
+
+-- ==========================================
+-- MAIN STATE MACHINE LOGIC (DENGAN PROTEKSI)
+-- ==========================================
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+
+        pcall(function()
+            if not isRunning then return end
+
+            -- JIKA FITUR OLD GAME AKTIF, DAN NOTIFIKASI BERHASIL DIDETEKSI
+            if Config.AutoJoinOldGame and oldGameDetected then
+                -- Lakukan loop penekanan ulang pasif untuk memastikan pemrosesan teleport
+                if currentFoundFrame and currentFoundFrame.Parent then
+                    executeRejoin()
+                end
+                return -- Keluar loop agar tidak menjalankan pembuat lobby di bawah
+            end
+
+            -- JIKA TIMEOUT 10 DETIK BELUM SELESAI, TAHAN EKSEKUSI LOBBY PINTU
+            if Config.AutoJoinOldGame and not oldGameTimeoutReached and not oldGameDetected then
+                return
+            end
+
+            -- ==========================================
+            -- PRIORITAS KEDUA: PENGATURAN LOBBY & DOORS
+            -- ==========================================
+            local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+            if not pGui then return end
+
+            local mapPickerLobby = getPath(pGui, {"GameGui", "Screen", "Middle", "MapPickerLobby"})
+            local bottomLobby    = getPath(pGui, {"GameGui", "Screen", "Bottom", "Lobby"})
+            
+            -- UI Updates
+            local mapTitleUI = getPath(mapPickerLobby, {"Items", "Frame", "Info", "Title"})
+            if mapTitleUI and mapTitleUI.Text ~= "" then MapInfoLabel.Text = "Map: " .. mapTitleUI.Text end
+
+            local playerAmtUI = getPath(bottomLobby, {"Frame", "MaxPlayers", "Bg", "Frame", "MaxPlayers", "Amount"})
+            if playerAmtUI and playerAmtUI.Text ~= "" then PlayerInfoLabel.Text = "Players: " .. playerAmtUI.Text .. " / " .. tostring(Config.MaxPlayers) end
+
+            -- FASE 3: SIAP MULAI
+            if bottomLobby and bottomLobby.Visible == true then
+                StatusLabel.Text = "Status: Mengatur Player..."
+                StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 80)
+                
+                if activeRemoteIndex then
+                    fireRemote("LobbySetMaxPlayers_" .. activeRemoteIndex, Config.MaxPlayers)
+                end
+                task.wait(0.5)
+
+                local currentAmt = playerAmtUI and playerAmtUI.Text or "0"
+                if currentAmt == tostring(Config.MaxPlayers) then
+                    StatusLabel.Text = "Status: Memulai Game!"
+                    StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 80)
+                    
+                    local startBtn = getPath(bottomLobby, {"Frame", "Buttons", "StartNow"})
+                    if startBtn then VirtualClick(startBtn) end
+                    
+                    if activeRemoteIndex then
+                        fireRemote("StartLobby_" .. activeRemoteIndex)
+                    end
+                    task.wait(4)
+                end
+
+            -- FASE 2: BUAT LOBBY
+            elseif mapPickerLobby and mapPickerLobby.Visible == true then
+                StatusLabel.Text = "Status: Membuat Lobby..."
+                StatusLabel.TextColor3 = Color3.fromRGB(80, 200, 200)
+
+                local acceptBtn = getPath(mapPickerLobby, {"Items", "Frame", "Info", "Accept"})
+                if acceptBtn then VirtualClick(acceptBtn) end
+                
+                if activeRemoteIndex then
+                    fireRemote("LobbySetMap_" .. activeRemoteIndex, Config.TargetMap, Config.TargetDifficulty, false)
+                end
+                task.wait(1.5)
+
+            -- FASE 1: MENCARI PINTU
+            else
+                StatusLabel.Text = "Status: Mencari Pintu..."
+                StatusLabel.TextColor3 = Color3.fromRGB(200, 80, 80)
+                
+                for _, door in ipairs(DOORS) do
+                    if not isRunning then break end
+                    
+                    local char = LocalPlayer.Character
+                    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+                    
+                    if hrp then
+                        hrp.CFrame = door.CF
+                        task.wait(1.5) 
+                        
+                        local updatedPicker = getPath(pGui, {"GameGui", "Screen", "Middle", "MapPickerLobby"})
+                        if updatedPicker and updatedPicker.Visible == true then
+                            activeRemoteIndex = door.RemoteIndex
+                            break
+                        else
+                            fireRemote("LeaveLobby_" .. door.RemoteIndex)
+                            task.wait(0.5)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
