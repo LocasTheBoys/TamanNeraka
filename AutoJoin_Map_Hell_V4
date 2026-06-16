@@ -13,7 +13,7 @@ local Config = {
     
     TargetMap            = "map_volcano", -- ID Map yang ingin dimainkan
     TargetDifficulty     = "dif_easy",    -- dif_easy, dif_normal, dll
-    MaxPlayers           = 1,             -- Jumlah maksimal player (1 = Solo)
+    MaxPlayers           = 2,             -- Jumlah maksimal player (1 = Solo)
     
     LobbyPlaceId         = 108533757090220
 }
