@@ -6,14 +6,14 @@
 -- [G] CONFIGURATION
 -- ==========================================
 local Config = {
-    AutoStart            = true,
+    AutoStart            = false,
     AutoJoinOldGame      = true,          -- true = Prioritaskan join server lama / false = langsung cari DOORS
     UseFirstTeleport     = true,          -- true = Wajib teleport ke lokasi awal dulu / false = langsung ke DOORS
-    DefaultStateMinimize = true,          -- true = Badge kecil [+] / false = Panel terbuka
+    DefaultStateMinimize = false,          -- true = Badge kecil [+] / false = Panel terbuka
     
     TargetMap            = "map_volcano", -- ID Map yang ingin dimainkan
     TargetDifficulty     = "dif_easy",    -- dif_easy, dif_normal, dll
-    MaxPlayers           = 2,             -- Jumlah maksimal player (1 = Solo)
+    MaxPlayers           = 4,             -- Jumlah maksimal player (1 = Solo)
     
     LobbyPlaceId         = 108533757090220
 }
