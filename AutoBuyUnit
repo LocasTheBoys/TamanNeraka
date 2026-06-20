@@ -8,10 +8,13 @@ local Config = {
     
     -- [ UNIT SEEDS CONFIG ]
     UnitsToBuy = {
-        { Name = "unit_birthday_cake", Limit = 3 },
-        { Name = "unit_lava_golem", Limit = 6 },
-        { Name = "unit_evil_stem", Limit = 6 },
-        { Name = "unit_meteor_plant", Limit = 2 }
+        { Name = "unit_stem_beam", Limit = 4 }, 
+        { Name = "unit_life_crystal", Limit = 4 }, 
+        --{ Name = "unit_birthday_cake", Limit = 3 }, 
+        --{ Name = "unit_birthday_cake", Limit = 3 }, 
+        --{ Name = "unit_lava_golem", Limit = 6 },
+        --{ Name = "unit_evil_stem", Limit = 6 },
+        { Name = "unit_meteor_plant", Limit = 4 }
     },
 
     -- [ MYSTERY TRADER CONFIG ]
