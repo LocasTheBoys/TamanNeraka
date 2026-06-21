@@ -3,7 +3,7 @@
 -- ==========================================
 
 local Config = {
-    AutoStart            = false,
+    AutoStart            = true,
     DefaultStateMinimize = false,
     
     -- [ UNIT SEEDS CONFIG ]
